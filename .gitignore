@@ -1,0 +1,26 @@
+# Segredos — NUNCA versionar (foi o que vazou no Poshboard)
+.env
+.env.*
+!.env.example
+*service-account*.json
+*-firebase*.json
+*credentials*.json
+*adminsdk*.json
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+
+# Node
+node_modules/
+dist/
+
+# Editor/SO
+.DS_Store
+.idea/
+.vscode/
