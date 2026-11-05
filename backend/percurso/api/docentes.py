@@ -16,6 +16,11 @@ from percurso.servicos.repo import Repo
 router = APIRouter(prefix="/docentes", tags=["Docentes"])
 
 
+def _cliente(request: Request) -> OpenAlexCliente:
+    cfg = request.app.state.config
+    return getattr(request.app.state, "openalex", None) or OpenAlexCliente(cfg.openalex_mailto, api_key=cfg.openalex_api_key)
+
+
 class DocenteDetalhe(Docente):
     orientandos: list[DiscenteResumo]
     producao: ResumoProducao
@@ -65,7 +70,7 @@ def apagar(id: str, u: Usuario = Depends(so_coordenacao), r: Repo = Depends(deps
 @router.post("/{id}/coletar", response_model=ResultadoColeta)
 def coletar(id: str, request: Request, u: Usuario = Depends(equipe), r: Repo = Depends(deps.repo)):
     _pode_editar(u, id)
-    cliente = getattr(request.app.state, "openalex", None) or OpenAlexCliente(request.app.state.config.openalex_mailto)
+    cliente = _cliente(request)
     return ColetaServico(r, cliente, hoje=getattr(request.app.state, "hoje", None)).coletar(id)
 
 
@@ -76,7 +81,7 @@ class ColetaGeral(BaseModel):
 
 @router.post("/coletar-todos", response_model=ColetaGeral)
 def coletar_todos(request: Request, u: Usuario = Depends(so_coordenacao), r: Repo = Depends(deps.repo)):
-    cliente = getattr(request.app.state, "openalex", None) or OpenAlexCliente(request.app.state.config.openalex_mailto)
+    cliente = _cliente(request)
     servico = ColetaServico(r, cliente, hoje=getattr(request.app.state, "hoje", None))
     resultados, erros = [], {}
     for d in r.docentes.listar():

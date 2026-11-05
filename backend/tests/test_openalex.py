@@ -71,3 +71,29 @@ def test_coleta_via_api(cliente, app):
     app.state.openalex = OpenAlexCliente(http=httpx.Client(transport=transporte([obra(9)])), pausa_s=0)
     r = cliente.post("/docentes/bruno/coletar")
     assert r.status_code == 200 and r.json()["novas"] == 1
+
+
+def test_orcid_usa_consulta_direta_e_envia_chave():
+    vistos = []
+
+    def handler(req: httpx.Request) -> httpx.Response:
+        vistos.append(req.url)
+        if req.url.path == "/authors/orcid:0000-0001-2345-6789":
+            return httpx.Response(200, json=AUTOR)
+        return httpx.Response(404, json={})
+
+    cli = OpenAlexCliente(http=httpx.Client(transport=httpx.MockTransport(handler)), pausa_s=0, api_key="k123")
+    from percurso.dominio.modelos import Docente
+    a = cli.autor(Docente(id="x", nome="Qualquer", orcid="https://orcid.org/0000-0001-2345-6789"))
+    assert a["display_name"] == "Ana Ribeiro"
+    assert vistos[0].params["api_key"] == "k123" and len(vistos) == 1  # não caiu na busca por nome
+
+
+def test_sem_chave_explica_o_que_fazer():
+    import pytest
+
+    from percurso.servicos.repo import RegraViolada
+
+    cli = OpenAlexCliente(http=httpx.Client(transport=httpx.MockTransport(lambda r: httpx.Response(409, json={}))), pausa_s=0)
+    with pytest.raises(RegraViolada, match="OPENALEX_API_KEY"):
+        cli.candidatos("Fulano")

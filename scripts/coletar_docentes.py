@@ -4,7 +4,7 @@
 Pensado para rodar agendado (Cloud Scheduler -> Cloud Run Job, ou cron),
 como o job de harvest do Poshboard. Usa o Firestore do Percurso.
 
-  FIREBASE_PROJECT_ID=percurso-ppg OPENALEX_MAILTO=voce@unipampa.edu.br \
+  FIREBASE_PROJECT_ID=percurso-ppg OPENALEX_API_KEY=sua-chave OPENALEX_MAILTO=voce@unipampa.edu.br \
     python scripts/coletar_docentes.py
 """
 
@@ -23,7 +23,7 @@ from percurso.store.firestore import FirestoreStore  # noqa: E402
 
 def main() -> int:
     repo = Repo(FirestoreStore(os.getenv("FIREBASE_PROJECT_ID")))
-    servico = ColetaServico(repo, OpenAlexCliente(os.getenv("OPENALEX_MAILTO")))
+    servico = ColetaServico(repo, OpenAlexCliente(os.getenv("OPENALEX_MAILTO"), api_key=os.getenv("OPENALEX_API_KEY")))
     falhas = 0
     for d in repo.docentes.listar():
         if not d.ativo:

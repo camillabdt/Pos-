@@ -46,9 +46,17 @@ class ResultadoColeta(BaseModel):
 
 
 class OpenAlexCliente:
+    """Cliente mínimo da API do OpenAlex.
+
+    Desde 13/02/2026 a API exige chave (gratuita, em openalex.org/settings/api).
+    Sem chave há só uma cota de demonstração (~100 créditos/dia); depois disso, erro 409.
+    Buscas e listas gastam 1 crédito; buscar um autor pelo id ou ORCID é gratuito.
+    """
+
     def __init__(self, mailto: str | None = None, http: httpx.Client | None = None,
-                 pausa_s: float = 0.15) -> None:
+                 pausa_s: float = 0.15, api_key: str | None = None) -> None:
         self.mailto = mailto
+        self.api_key = api_key
         self.http = http or httpx.Client(timeout=30, headers={
             "User-Agent": f"percurso/1.0 (mailto:{mailto})" if mailto else "percurso/1.0",
             "Accept": "application/json",
@@ -57,27 +65,44 @@ class OpenAlexCliente:
 
     def _get(self, caminho: str, params: dict | None = None) -> dict:
         params = dict(params or {})
+        if self.api_key:
+            params.setdefault("api_key", self.api_key)
         if self.mailto:
             params.setdefault("mailto", self.mailto)
-        r = self.http.get(f"{BASE}{caminho}", params=params)
+        try:
+            r = self.http.get(f"{BASE}{caminho}", params=params)
+        except httpx.HTTPError as exc:
+            raise RegraViolada(f"Não consegui acessar o OpenAlex ({exc.__class__.__name__}). Verifique a conexão.") from exc
         if r.status_code == 404:
             return {}
+        if r.status_code in (401, 403, 409) or (r.status_code == 429 and not self.api_key):
+            raise RegraViolada(
+                "O OpenAlex recusou a consulta por falta de chave ou cota esgotada. "
+                "Crie uma chave gratuita em openalex.org/settings/api e defina OPENALEX_API_KEY."
+            )
+        if r.status_code == 429:
+            raise RegraViolada("Limite de consultas do OpenAlex atingido. Tente de novo mais tarde.")
         if r.status_code >= 400:
             raise RegraViolada(f"OpenAlex respondeu {r.status_code}. Tente de novo em alguns minutos.")
         return r.json()
 
+    def candidatos(self, nome: str, quantos: int = 10) -> list[dict]:
+        """Autores com nome parecido, do mais citado para o menos citado."""
+        res = self._get("/authors", {"search": nome, "per_page": quantos}).get("results", [])
+        return sorted(res, key=lambda a: (a.get("cited_by_count") or 0, a.get("works_count") or 0), reverse=True)
+
     def autor(self, docente: Docente) -> dict | None:
+        # Por id ou ORCID é consulta direta (gratuita e sem ambiguidade).
         if docente.openalex_id:
             return self._get(f"/authors/{docente.openalex_id}") or None
         if docente.orcid:
-            res = self._get("/authors", {"filter": f"orcid:{docente.orcid}"}).get("results", [])
-            if res:
-                return res[0]
-        res = self._get("/authors", {"search": docente.nome, "per_page": 10}).get("results", [])
-        if not res:
-            return None
-        # Mesma heurística do Poshboard: o candidato mais citado / com mais obras.
-        return max(res, key=lambda a: (a.get("cited_by_count") or 0, a.get("works_count") or 0))
+            achado = self._get(f"/authors/orcid:{docente.orcid}")
+            if achado:
+                return achado
+        # Só pelo nome: mesma heurística do Poshboard, o candidato mais citado.
+        # Pode errar com homônimos — por isso o cadastro deve ter ORCID.
+        res = self.candidatos(docente.nome)
+        return res[0] if res else None
 
     def obras(self, autor_id: str, max_paginas: int = 5) -> list[dict]:
         obras, cursor, paginas = [], "*", 0

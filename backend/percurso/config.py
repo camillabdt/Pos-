@@ -12,6 +12,7 @@ class Config:
     auth: str = field(default_factory=lambda: os.getenv("PERCURSO_AUTH", "dev"))
     firebase_project_id: str | None = field(default_factory=lambda: os.getenv("FIREBASE_PROJECT_ID"))
     openalex_mailto: str | None = field(default_factory=lambda: os.getenv("OPENALEX_MAILTO"))
+    openalex_api_key: str | None = field(default_factory=lambda: os.getenv("OPENALEX_API_KEY"))
     cors_origens: tuple[str, ...] = field(
         default_factory=lambda: tuple(
             o.strip() for o in os.getenv("CORS_ORIGENS", "http://localhost:5173").split(",") if o.strip()

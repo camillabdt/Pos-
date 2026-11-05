@@ -44,6 +44,17 @@ npm run dev                                         # http://localhost:5173
 No modo de desenvolvimento, use **"Ver como"** no canto superior para alternar entre
 coordenação, um docente ou um discente e conferir o que cada papel vê e pode alterar.
 
+### Testar a busca de um(a) professor(a) no OpenAlex
+
+```bash
+export OPENALEX_API_KEY=sua-chave      # gratuita em https://openalex.org/settings/api (Windows: set OPENALEX_API_KEY=...)
+python scripts/testar_openalex.py "Silvio Ereno Quincozes" --orcid 0000-0001-6793-4033
+```
+
+Mostra os candidatos com nome parecido, qual a coleta escolheria e um resumo da produção. Não grava nada.
+Desde 13/02/2026 a API do OpenAlex exige chave; sem ela há só uma pequena cota diária de demonstração.
+Para a coleta dentro do sistema, defina `OPENALEX_API_KEY` antes de subir a API.
+
 Testes: `cd backend && pytest -q` (regras de situação, API, permissões, coleta OpenAlex e importação).
 
 ## Papéis
@@ -79,7 +90,7 @@ Mudar um prazo muda o painel na hora, sem migração.
    ```bash
    cd backend
    gcloud run deploy percurso-api --source . --region southamerica-east1 \
-     --set-env-vars PERCURSO_ARMAZENAMENTO=firestore,PERCURSO_AUTH=firebase,FIREBASE_PROJECT_ID=SEU_PROJETO,OPENALEX_MAILTO=voce@instituicao.br,CORS_ORIGENS=https://SEU_PROJETO.web.app
+     --set-env-vars PERCURSO_ARMAZENAMENTO=firestore,PERCURSO_AUTH=firebase,FIREBASE_PROJECT_ID=SEU_PROJETO,OPENALEX_API_KEY=SUA_CHAVE,OPENALEX_MAILTO=voce@instituicao.br,CORS_ORIGENS=https://SEU_PROJETO.web.app
    ```
    No Cloud Run a credencial vem da conta de serviço do próprio serviço — **não** é preciso arquivo JSON.
 4. Interface no Firebase Hosting: copie `frontend/.env.example` para `frontend/.env.production`,
