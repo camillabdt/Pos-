@@ -92,6 +92,11 @@ export interface Painel {
 export interface ResultadoColeta {
   nome_openalex: string | null; obras_lidas: number; novas: number; atualizadas: number; ignoradas: number; metricas: Metricas;
 }
+export interface CandidatoOpenAlex {
+  openalex_id: string; nome: string; orcid: string | null; obras: number; citacoes: number;
+  instituicao: string | null; achado_por_orcid: boolean; nome_identico: boolean; ja_vinculado_a: string | null;
+}
+export interface Saude { ok: boolean; armazenamento: string; auth: string; openalex_chave: boolean }
 export interface Usuario { uid: string; papel: "coordenacao" | "docente" | "discente"; docente_id?: string | null; discente_id?: string | null }
 
 export class ErroApi extends Error {
@@ -160,6 +165,9 @@ export const api = {
   criarDocente: (d: unknown) => req<Docente>("POST", "/docentes", d),
   atualizarDocente: (id: string, d: unknown) => req<Docente>("PATCH", `/docentes/${id}`, d),
   coletar: (id: string) => req<ResultadoColeta>("POST", `/docentes/${id}/coletar`),
+  candidatosOpenAlex: (nome: string, orcid?: string) =>
+    req<CandidatoOpenAlex[]>("GET", `/docentes/openalex/candidatos${qs({ nome, orcid })}`),
+  saude: () => req<Saude>("GET", "/saude"),
 
   producoes: (p: { discente_id?: string; docente_id?: string; tipo?: string; ano_de?: number; ano_ate?: number; so_com_discentes?: boolean; busca?: string } = {}) =>
     req<Producao[]>("GET", `/producoes${qs(p)}`),

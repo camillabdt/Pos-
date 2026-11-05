@@ -48,7 +48,8 @@ def criar_app(config: Config | None = None, store: Store | None = None) -> FastA
 
     @app.get("/saude", tags=["Sistema"])
     def saude():
-        return {"ok": True, "armazenamento": config.armazenamento, "auth": config.auth}
+        return {"ok": True, "armazenamento": config.armazenamento, "auth": config.auth,
+                "openalex_chave": bool(config.openalex_api_key)}
 
     @app.get("/eu", response_model=Usuario, tags=["Sistema"])
     def eu(u: Usuario = Depends(usuario_atual)):

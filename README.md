@@ -46,6 +46,18 @@ coordenação, um docente ou um discente e conferir o que cada papel vê e pode 
 
 ### Testar a busca de um(a) professor(a) no OpenAlex
 
+**Pela interface:** em Docentes, abra (ou cadastre) o(a) professor(a) e clique em **Encontrar no OpenAlex**.
+Aparecem os perfis parecidos, sem gravar nada; escolha o certo em **Usar este perfil** e depois
+**Coletar produção agora**. Para isso a API precisa da chave: crie `backend/.env` com
+
+```
+OPENALEX_API_KEY=sua-chave
+```
+
+e reinicie a API (a tela avisa quando a chave está faltando).
+
+**Pelo terminal**, sem gravar nada:
+
 ```bash
 export OPENALEX_API_KEY=sua-chave      # gratuita em https://openalex.org/settings/api (Windows: set OPENALEX_API_KEY=...)
 python scripts/testar_openalex.py "Silvio Ereno Quincozes" --orcid 0000-0001-6793-4033

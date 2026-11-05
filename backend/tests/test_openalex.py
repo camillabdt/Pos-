@@ -97,3 +97,24 @@ def test_sem_chave_explica_o_que_fazer():
     cli = OpenAlexCliente(http=httpx.Client(transport=httpx.MockTransport(lambda r: httpx.Response(409, json={}))), pausa_s=0)
     with pytest.raises(RegraViolada, match="OPENALEX_API_KEY"):
         cli.candidatos("Fulano")
+
+
+def test_candidatos_via_api_nao_grava_e_marca_orcid(cliente, app):
+    outro = {**AUTOR, "id": "https://openalex.org/A111", "display_name": "Ana Ribeiro", "orcid": None, "cited_by_count": 3}
+
+    def handler(req: httpx.Request) -> httpx.Response:
+        if req.url.path == "/authors/orcid:0000-0001-2345-6789":
+            return httpx.Response(200, json=AUTOR)
+        if req.url.path == "/authors":
+            return httpx.Response(200, json={"results": [outro, AUTOR]})
+        return httpx.Response(404, json={})
+
+    app.state.openalex = OpenAlexCliente(http=httpx.Client(transport=httpx.MockTransport(handler)), pausa_s=0)
+    antes = len(cliente.get("/producoes").json())
+    r = cliente.get("/docentes/openalex/candidatos", params={"nome": "Ana Ribeiro", "orcid": "0000-0001-2345-6789"})
+    assert r.status_code == 200, r.text
+    c = r.json()
+    assert [x["openalex_id"] for x in c] == ["A999", "A111"]  # o do ORCID primeiro, sem repetir
+    assert c[0]["achado_por_orcid"] and c[1]["nome_identico"]
+    assert len(cliente.get("/producoes").json()) == antes
+    assert cliente.get("/docentes/openalex/candidatos").status_code == 422

@@ -320,3 +320,17 @@ dialog form > footer, .bloco form > footer { display: flex; justify-content: fle
   .trilho-legendas span:nth-child(2) { display: none; }
 }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; scroll-behavior: auto !important; } }
+
+/* busca no OpenAlex */
+.acoes { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+.busca-openalex { padding: 1.25rem; }
+.busca-openalex form { padding: 0; }
+.busca-openalex .aviso { margin: 0 0 1rem; }
+.candidatos { list-style: none; padding: 0; margin: 1rem 0 0; border: 1px solid var(--linha); border-radius: var(--raio); }
+.candidatos li { display: flex; justify-content: space-between; align-items: center; gap: 1rem; padding: 0.75rem 1rem; }
+.candidatos li + li { border-top: 1px solid var(--linha); }
+.candidatos li.escolhido { background: color-mix(in srgb, var(--ok) 8%, transparent); }
+.candidatos li button { flex-shrink: 0; }
+.selo { font-size: 0.75rem; font-weight: 600; color: var(--fim); background: color-mix(in srgb, var(--fim) 12%, transparent); border-radius: 999px; padding: 0.05rem 0.5rem; margin-left: 0.5rem; }
+.rodape-busca { display: flex; justify-content: space-between; align-items: center; gap: 1rem; margin-top: 1rem; flex-wrap: wrap; }
+code { font-size: 0.85em; background: var(--fundo); padding: 0.05rem 0.3rem; border-radius: 3px; }

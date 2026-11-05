@@ -2,6 +2,23 @@ from __future__ import annotations
 
 import os
 from dataclasses import dataclass, field
+from pathlib import Path
+
+
+def carregar_env(caminho: Path = Path(__file__).resolve().parents[1] / ".env") -> None:
+    """Lê backend/.env (CHAVE=valor por linha) sem sobrescrever variáveis já definidas."""
+    if not caminho.is_file():
+        return
+    for linha in caminho.read_text(encoding="utf-8").splitlines():
+        linha = linha.strip()
+        if not linha or linha.startswith("#") or "=" not in linha:
+            continue
+        chave, valor = linha.split("=", 1)
+        if valor.strip():
+            os.environ.setdefault(chave.strip(), valor.strip().strip('"').strip("'"))
+
+
+carregar_env()
 
 
 @dataclass(frozen=True)
